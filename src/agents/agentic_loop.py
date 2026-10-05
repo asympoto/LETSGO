@@ -523,6 +523,19 @@ class AgenticLoop:
                         observation=obs,
                         duration_ms=elapsed_ms,
                     ))
+
+                    # Auto-finish if all requested intent sections have been gathered
+                    requested_sections = set(intent.get("sections", []))
+                    if requested_sections and requested_sections.issubset(set(fulfilled.keys())):
+                        step_num += 1
+                        trace.append(TraceStep(
+                            step=step_num,
+                            thought="All requested sections gathered successfully.",
+                            action="finish_complete",
+                            action_args={},
+                            observation=f"Gathered all requested sections: {list(fulfilled.keys())}.",
+                        ))
+                        break
             except Exception as exc:
                 if telemetry:
                     telemetry.error("AgenticLoop", f"LLM select_next_action failed: {exc}. Falling back to deterministic loop.")

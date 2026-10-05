@@ -129,6 +129,7 @@ class LLMClient:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
+            "max_tokens": 1024,
         }
 
         if tools:
@@ -151,7 +152,7 @@ class LLMClient:
                 method="POST",
             )
             t0 = time.perf_counter()
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 duration_ms = (time.perf_counter() - t0) * 1000
                 usage = data.get("usage", {})

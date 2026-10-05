@@ -160,22 +160,33 @@ class SQLiteSessionManager:
 
     def list_sessions(self, limit: int = 20) -> List[Dict[str, Any]]:
         with self._conn() as conn:
+            # Fetch sessions with the first stored query via a single LEFT JOIN
+            # to avoid the previous N+1 pattern (one query per session).
             rows = conn.execute(
-                "SELECT * FROM sessions ORDER BY created_at DESC LIMIT ?", (limit,)
+                """
+                SELECT s.*,
+                       (SELECT i.data
+                        FROM interactions i
+                        WHERE i.session_id = s.session_id
+                          AND json_extract(i.data, '$.query') IS NOT NULL
+                        ORDER BY i.id
+                        LIMIT 1) AS first_query_data
+                FROM sessions s
+                ORDER BY s.created_at DESC
+                LIMIT ?
+                """,
+                (limit,),
             ).fetchall()
+
             summaries = []
             for row in rows:
                 intent = json.loads(row["intent"]) if row["intent"] else {}
-                first_q_rows = conn.execute(
-                    "SELECT data FROM interactions WHERE session_id=? ORDER BY id LIMIT 10",
-                    (row["session_id"],),
-                ).fetchall()
                 query = ""
-                for r in first_q_rows:
-                    d = json.loads(r["data"])
-                    if d.get("query"):
-                        query = d["query"]
-                        break
+                if row["first_query_data"]:
+                    try:
+                        query = json.loads(row["first_query_data"]).get("query", "")
+                    except (json.JSONDecodeError, AttributeError):
+                        query = ""
                 summaries.append({
                     "session_id": row["session_id"],
                     "user_id":    row["user_id"],

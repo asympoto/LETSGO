@@ -240,13 +240,15 @@ def _call_osrm_route(
     name="get_commute_route",
     description="Get real commute routing data between two locations",
 )
-def get_commute_route(location: str, destination: str = "", mode: str = "drive") -> dict:
+def get_commute_route(location: str = "", destination: str = "", mode: str = "drive", origin: str = "") -> dict:
     """Return routing data for all supported modes.
 
     `location`    -- origin (e.g. "Mumbai, India" or "Chicago, IL")
     `destination` -- explicit destination; defaults to city centre of location
     `mode`        -- primary mode: "drive" | "transit" | "bike" | "walk"
     """
+    if origin and not location:
+        location = origin
     api_key = Config.TOMTOM_API_KEY
 
     # Normalise mode
@@ -457,8 +459,8 @@ def get_commute_advice(location: str) -> str:
 
 
 class CommuteTool:
-    def get_commute_route(self, location: str, destination: str = "", mode: str = "drive") -> dict:
-        return get_commute_route(location, destination, mode)
+    def get_commute_route(self, location: str = "", destination: str = "", mode: str = "drive", origin: str = "") -> dict:
+        return get_commute_route(location, destination, mode, origin)
 
     # legacy shim
     def get_commute_advice(self, location: str) -> str:

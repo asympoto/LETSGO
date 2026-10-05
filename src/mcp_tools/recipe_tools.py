@@ -243,15 +243,24 @@ def get_meal_recipe(
 
 # Backward-compatible tool alias
 @mcp.tool(name="get_recipe", description="Suggest a quick recipe based on available ingredients, time, and meal type")
-def get_recipe(ingredients: list, time_constraint: str = "15 min", meal_type: str = "meal") -> dict:
+def get_recipe(ingredients: Any = None, time_constraint: str = "15 min", meal_type: str = "meal", cuisine: str = None, dish: str = None, time: str = None) -> dict:
+    if time and not time_constraint:
+        time_constraint = time
+    if isinstance(ingredients, str):
+        ingredients = [ingredients]
+    elif not ingredients:
+        if dish:
+            ingredients = [dish]
+        else:
+            ingredients = ["eggs"]
     return get_meal_recipe(ingredients=ingredients, time_constraint=time_constraint, meal_type=meal_type)
 
 
 class RecipeTool:
     """Tool class exposing recipe and meal generation methods."""
 
-    def get_recipe(self, ingredients: list, time_constraint: str = "15 min", meal_type: str = "meal") -> dict:
-        return get_meal_recipe(ingredients=ingredients, time_constraint=time_constraint, meal_type=meal_type)
+    def get_recipe(self, ingredients: Any = None, time_constraint: str = "15 min", meal_type: str = "meal", cuisine: str = None, dish: str = None, time: str = None) -> dict:
+        return get_recipe(ingredients=ingredients, time_constraint=time_constraint, meal_type=meal_type, cuisine=cuisine, dish=dish, time=time)
 
     def get_meal_recipe(self, ingredients: list, time_constraint: str = "15 min", meal_type: str = "meal", cuisine_pref: str = None) -> dict:
         return get_meal_recipe(ingredients=ingredients, time_constraint=time_constraint, meal_type=meal_type, cuisine_pref=cuisine_pref)

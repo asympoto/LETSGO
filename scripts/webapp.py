@@ -312,7 +312,7 @@ class CommuteCommanderHandler(SimpleHTTPRequestHandler):
 
             t = threading.Thread(target=_run, daemon=True)
             t.start()
-            t.join(timeout=45)
+            t.join(timeout=90)
 
             if error_box:
                 raise error_box[0]
@@ -337,6 +337,10 @@ class CommuteCommanderHandler(SimpleHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError) as exc:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
         except Exception as exc:
+            import traceback
+            tb_str = traceback.format_exc()
+            telemetry.error("HTTP", f"500 Error in _handle_briefing: {exc}\n{tb_str}")
+            print(f"[ERROR] 500 Error in _handle_briefing: {exc}\n{tb_str}")
             self._send_json(
                 HTTPStatus.INTERNAL_SERVER_ERROR,
                 {"error": f"Could not create the briefing: {exc}"},
@@ -607,7 +611,7 @@ class CommuteCommanderHandler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     from services.config import Config
     server = ThreadingHTTPServer(("127.0.0.1", 8000), CommuteCommanderHandler)
-    model = Config.get_llm_model() or "llama-3.1-8b-instruct"
+    model = Config.get_llm_model() or "meta/llama-3.2-3b-instruct"
     
     print("\n" + "\033[1m\033[36m" + "═" * 65 + "\033[0m")
     print(" \033[1m\033[32m🚀 LetsGo — Multi-Agent Assistant Server\033[0m")

@@ -104,11 +104,17 @@ def _send_email_smtp(
 )
 def send_email_briefing(
     to_email: str,
-    subject: str,
-    body_html: str,
+    subject: str = "Morning Briefing",
+    body_html: str = "",
     body_text: str = "",
+    body: str = "",
 ) -> Dict[str, Any]:
     """FastMCP tool to dispatch briefing/itinerary email to traveler."""
+    if body and not body_html:
+        body_html = f"<p>{body}</p>"
+        body_text = body_text or body
+    if not body_html and not body_text:
+        body_html = f"<p>{subject}</p>"
     if not to_email or "@" not in to_email:
         return {
             "status": "error",
